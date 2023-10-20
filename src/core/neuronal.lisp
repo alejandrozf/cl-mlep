@@ -73,18 +73,18 @@
 
 (defun net-structure-to-weights (net-structure &optional weight-init-range)
   (let* ((len-1 (1- (length net-structure)))
-         (weights (make-array len-1 :element-type 'array)))
+         (weights (make-array len-1 #-abcl :element-type #-abcl 'array)))
     ; all layers except last one have bias unit
     (dotimes-fromto (i 1 len-1)
       (setf (aref weights (1- i))
             (make-array (list (1+ (nth (1- i) net-structure))
                               (1+ (nth i net-structure)))
-                        ::element-type 'double-float :initial-element 0.0d0)))
+                        #-abcl ::element-type #-abcl 'double-float :initial-element 0.0d0)))
     ; last layer does not have a bias unit
     (setf (aref weights (1- len-1))
           (make-array (list (1+ (nth (1- len-1) net-structure))
                             (nth len-1 net-structure))
-                      ::element-type 'double-float :initial-element 0.0d0))
+                      #-abcl ::element-type #-abcl 'double-float :initial-element 0.0d0))
     ; initialize weights
     (when weight-init-range
       (dotimes (idx len-1)
@@ -94,17 +94,17 @@
     weights))
 
 (defun net-structure-to-array (net-structure &optional (value 0.0d0))
-  (let ((bias (make-array (length net-structure) :element-type 'array)))
+  (let ((bias (make-array (length net-structure) #-abcl :element-type #-abcl 'array)))
     (dolist-with-index (idx item net-structure bias)
       (setf (aref bias idx)
-            (make-array item :element-type 'double-float :initial-element value)))))
+            (make-array item #-abcl :element-type #-abcl 'double-float :initial-element value)))))
 
 
-         
+
 (defmethod forward ((instance neuronal-network) &key input)
   (with-slots (weights output-net output-net-before-activation activation-function) instance
     (let ((tmp (make-array (1+ (first (array-dimensions input)))
-                           :initial-element 1.0d0)))  
+                           :initial-element 1.0d0)))
       ; initialize input (with bias)
       (dotimes (i (first (array-dimensions input)))
         (setf (aref tmp i) (aref input i)))
@@ -126,10 +126,10 @@
     (let* ((len (first (array-dimensions output-net)))
            (out (forward instance :input input))
            (error (map 'vector #'- wanted out))
-           (delta (make-array (1- len) :element-type 'array)))
+           (delta (make-array (1- len) #-abcl :element-type #-abcl 'array)))
       ; compute deltas
       (setf (aref delta (- len 2))
-            (map 'vector #'* error (map 'vector (diff activation-function) 
+            (map 'vector #'* error (map 'vector (diff activation-function)
                                         (aref output-net-before-activation (1- len)))))
       (loop for layer from (- len 2) downto 1 do
             (setf (aref delta (1- layer))
@@ -142,7 +142,7 @@
       (dotimes (i (first (array-dimensions weights)))
         (let ((layer (vector-to-2d-col (aref output-net i)))
               (delt (vector-to-2d-col (aref delta i))))
-          (setf  (aref weights i) 
+          (setf  (aref weights i)
                  (map-pointwise #'+
                                 (aref weights i)
                                 (map-pointwise #'(lambda (x) (* x learning-rate))
@@ -179,6 +179,3 @@
           (dolist (idx idxs)
             (backprop instance (row-of-array data-set idx) (row-of-array set-labels idx)))))))
   (values))
-    
-                                
-      
