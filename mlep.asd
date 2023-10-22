@@ -24,6 +24,7 @@ following claims:
  * to provide a tutorial-style documentation so that one should get to know this
    library easily"
     :serial t
+    #+abcl :depends-on (:abcl-big-decimals) ;just for avoid some NAN values
     :pathname #P"src/"
     :components ((:file "package")
                  (:module "macros"
