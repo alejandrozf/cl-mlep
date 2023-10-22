@@ -146,7 +146,7 @@
                             :element-type (array-element-type array))))
     (dotimes (i (second (array-dimensions array)) result)
       (setf (aref result i) (aref array 0 i)))))
-                
+
 
 ; the three functions `multiply-matrices', `matrix-identity' and `matrix-expt' are just copied from
 ; http://rosettacode.org/wiki/Matrix-exponentiation_operator#Common_Lisp
@@ -168,18 +168,18 @@
                                      :initial-element 0) rarr)
                    (n 0 (if (= n (1- m0-cols)) 0 (1+ n)))
                    (cc 0 (if (= n (1- m0-cols))
-                             (if (/= cc (1- m1-cols)) 
+                             (if (/= cc (1- m1-cols))
                                  (1+ cc) 0) cc))
-                   (cr 0 (if (and (= (1- m0-cols) n) 
+                   (cr 0 (if (and (= (1- m0-cols) n)
                                   (= (1- m1-cols) cc))
                              (1+ cr)
                              cr)))
                   ((= cr m0-rows) rarr)
                 (setf (aref rarr cr cc)
-                      (+ (aref rarr cr cc)
-                         (* (aref matrix-0 cr n)
-                            (aref matrix-1 n cc))))))))))
- 
+                      (opt+ (aref rarr cr cc)
+                         (opt* (aref matrix-0 cr n)
+                               (aref matrix-1 n cc))))))))))
+
 (defun matrix-identity (dim &key (element-type t))
   "Creates a new identity matrix of size dim*dim"
   (do ((rarr (make-array (list dim dim)
@@ -188,7 +188,7 @@
        (n 0 (1+ n)))
       ((= n dim) rarr)
     (setf (aref rarr n n) (coerce 1 element-type))))
- 
+
 (defun matrix-expt (matrix exp)
   "Takes the first argument (a matrix) and multiplies it by itself exp times"
   (let* ((m-dims (array-dimensions matrix))

@@ -28,7 +28,8 @@ following claims:
     :pathname #P"src/"
     :components ((:file "package")
                  (:module "macros"
-			  :components ((:file "macros")))
+		  :components ((:file "macros")))
+                 #+abcl (:file "math")
 		 (:module "datasets"
 			  :components ((:file "iris")
                                        (:file "heights-weights")

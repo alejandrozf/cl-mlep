@@ -90,7 +90,10 @@
       (dotimes (idx len-1)
         (dotimes (i (first (array-dimensions (aref weights idx))))
           (dotimes (j (second (array-dimensions (aref weights idx))))
-            (setf (aref (aref weights idx) i j) (coerce (apply #'random-from-to weight-init-range) 'double-float))))))
+            (setf (aref (aref weights idx) i j)
+                  #-abcl(coerce (apply #'random-from-to weight-init-range) 'double-float)
+                  #+abcl(apply #'random-from-to weight-init-range)
+                  )))))
     weights))
 
 (defun net-structure-to-array (net-structure &optional (value 0.0d0))
@@ -125,15 +128,15 @@
   (with-slots (weights output-net output-net-before-activation activation-function learning-rate) instance
     (let* ((len (first (array-dimensions output-net)))
            (out (forward instance :input input))
-           (error (map 'vector #'- wanted out))
+           (error (map 'vector #'opt- wanted out))
            (delta (make-array (1- len) #-abcl :element-type #-abcl 'array)))
       ; compute deltas
       (setf (aref delta (- len 2))
-            (map 'vector #'* error (map 'vector (diff activation-function)
+            (map 'vector #'opt* error (map 'vector (diff activation-function)
                                         (aref output-net-before-activation (1- len)))))
       (loop for layer from (- len 2) downto 1 do
             (setf (aref delta (1- layer))
-                  (map 'vector #'*
+                  (map 'vector #'opt*
                        (2d-col-to-vector
                         (multiply-matrices (vector-to-2d-col (aref delta layer))
                                            (transpose (aref weights layer))))
@@ -143,9 +146,9 @@
         (let ((layer (vector-to-2d-col (aref output-net i)))
               (delt (vector-to-2d-col (aref delta i))))
           (setf  (aref weights i)
-                 (map-pointwise #'+
+                 (map-pointwise #'opt+
                                 (aref weights i)
-                                (map-pointwise #'(lambda (x) (* x learning-rate))
+                                (map-pointwise #'(lambda (x) (opt* x learning-rate))
                                                (multiply-matrices (transpose layer) delt)))))))))
 
 (defmethod classify ((instance neuronal-network) &key new-data-set verbose)
