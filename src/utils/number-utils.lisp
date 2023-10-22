@@ -8,13 +8,13 @@
 @arg[state]{a random state object containing information used by the pseudo-random number generator}
 @return{a random number}
 Gives a random number in certain range."
-  ;; #+abcl(setf from (abcl-big-decimals:big-decimal->double-float from))
-  ;; #+abcl(setf to (abcl-big-decimals:big-decimal->double-float to))
+  #+abcl(setf from (abcl-big-decimals:big-decimal->double-float from))
+  #+abcl(setf to (abcl-big-decimals:big-decimal->double-float to))
   (when (and (rationalp from) (not (integerp from)))
     (setf from (float from)))
   (when (and (rationalp to) (not (integerp to)))
     (setf to (float to)))
-  (abcl-big-decimals:make-big-decimal (+ (random (- to from) state) from)))
+  (+ (random (- to from) state) from))
 
 (defun range (from to &optional (step 1))
   "Gives a list with all numbers from `FROM' to (exclusive) `TO'."

@@ -35,7 +35,9 @@
     :documentation "The output of all neurons of the network before the activation function was applied.")
    (weight-init-range
     :initarg :weight-init-range
-    :initform '(-0.1d0 0.1d0)
+    :initform #-abcl '(-0.1d0 0.1d0)
+              #+abcl (list (abcl-big-decimals:make-big-decimal "-0.1")
+                           (abcl-big-decimals:make-big-decimal "0.1"))
     :accessor weight-init-range
     :documentation "The maximum range for initializing the weights.")
    (activation-function
@@ -45,7 +47,8 @@
     :documentation "The activation function, usually a Heaviside step function.")
    (learning-rate
     :initarg :learning-rate
-    :initform 0.2d0
+    :initform #-abcl 0.2d0
+              #+abcl (abcl-big-decimals:make-big-decimal "0.2")
     :accessor learning-rate
     :documentation "The learning rate."))
   (:documentation "A fully-connected Feed-Forward Multi-Layer Perceptron."))
@@ -68,8 +71,12 @@
 (defmethod initialize ((instance neuronal-network) &key)
   (with-slots (net-structure output-net output-net-before-activation weight-init-range weights) instance
     (setf weights (net-structure-to-weights net-structure weight-init-range))
-    (setf output-net (net-structure-to-array net-structure 1.0d0))
-    (setf output-net-before-activation (net-structure-to-array net-structure 1.0d0))))
+    (setf output-net (net-structure-to-array net-structure
+                                             #-abcl 1.0d0
+                                             #+abcl (abcl-big-decimals:make-big-decimal 1)))
+    (setf output-net-before-activation (net-structure-to-array net-structure
+                                                               #-abcl 1.0d0
+                                                               #+abcl (abcl-big-decimals:make-big-decimal 1)))))
 
 (defun net-structure-to-weights (net-structure &optional weight-init-range)
   (let* ((len-1 (1- (length net-structure)))
@@ -79,12 +86,18 @@
       (setf (aref weights (1- i))
             (make-array (list (1+ (nth (1- i) net-structure))
                               (1+ (nth i net-structure)))
-                        #-abcl ::element-type #-abcl 'double-float :initial-element 0.0d0)))
+                        #-abcl ::element-type #-abcl 'double-float
+                        :initial-element #-abcl 0.0d0
+                                         #+abcl (abcl-big-decimals:make-big-decimal 0))))
     ; last layer does not have a bias unit
     (setf (aref weights (1- len-1))
           (make-array (list (1+ (nth (1- len-1) net-structure))
                             (nth len-1 net-structure))
-                      #-abcl ::element-type #-abcl 'double-float :initial-element 0.0d0))
+                      #-abcl ::element-type #-abcl 'double-float
+                      :initial-element #-abcl 0.0d0
+                                       #+abcl (abcl-big-decimals:make-big-decimal 0)))
+
+
     ; initialize weights
     (when weight-init-range
       (dotimes (idx len-1)
@@ -96,7 +109,8 @@
                   )))))
     weights))
 
-(defun net-structure-to-array (net-structure &optional (value 0.0d0))
+(defun net-structure-to-array (net-structure &optional (value #-abcl 0.0d0
+                                                              #+abcl (abcl-big-decimals:make-big-decimal 0)))
   (let ((bias (make-array (length net-structure) #-abcl :element-type #-abcl 'array)))
     (dolist-with-index (idx item net-structure bias)
       (setf (aref bias idx)
@@ -107,7 +121,8 @@
 (defmethod forward ((instance neuronal-network) &key input)
   (with-slots (weights output-net output-net-before-activation activation-function) instance
     (let ((tmp (make-array (1+ (first (array-dimensions input)))
-                           :initial-element 1.0d0)))
+                           :initial-element #-abcl 1.0d0
+                                            #+abcl (abcl-big-decimals:make-big-decimal 1))))
       ; initialize input (with bias)
       (dotimes (i (first (array-dimensions input)))
         (setf (aref tmp i) (aref input i)))
@@ -129,7 +144,8 @@
     (let* ((len (first (array-dimensions output-net)))
            (out (forward instance :input input))
            (error (map 'vector #'opt- wanted out))
-           (delta (make-array (1- len) #-abcl :element-type #-abcl 'array)))
+           (delta (make-array (1- len) #-abcl :element-type #+
+                                                            -abcl 'array)))
       ; compute deltas
       (setf (aref delta (- len 2))
             (map 'vector #'opt* error (map 'vector (diff activation-function)
